@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Ritmo Mo Wa" />
+  <meta name="theme-color" content="#fafafa" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="apple-touch-icon" href="./icon-512.png" />
+  <title>Ritmo Mo Wa</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #fafafa;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: max(48px, env(safe-area-inset-top));
+      padding-bottom: max(32px, env(safe-area-inset-bottom));
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+      min-height: 100dvh;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: #1a1a1a;
+    }
+    .cabecalho { text-align: center; margin-bottom: 8px; }
+    h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.3px; color: #1a1a1a; }
+    .subtitulo { font-size: 0.8rem; color: #aaaaaa; letter-spacing: 0.5px; margin-top: 4px; }
+    section { margin-top: 48px; width: 90%; max-width: 420px; }
+    .label { font-size: 0.65rem; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: #bbbbbb; margin-bottom: 10px; }
+    .tarefa { font-size: 1.15rem; font-weight: 500; color: #1a1a1a; }
+    .horario { font-size: 0.8rem; color: #bbbbbb; margin-top: 4px; display: block; }
+    .faltam { margin-top: 56px; font-size: 0.85rem; color: #999999; letter-spacing: 0.3px; }
+    .dia-especial {
+      margin-top: 64px;
+      width: 90%;
+      max-width: 420px;
+      text-align: center;
+    }
+    .dia-especial .emoji { font-size: 2.5rem; display: block; margin-bottom: 16px; }
+    .dia-especial .msg { font-size: 1.1rem; font-weight: 500; color: #1a1a1a; }
+    .dia-especial .submsg { font-size: 0.85rem; color: #aaaaaa; margin-top: 8px; }
+
+    /* Relógio e data */
+    .relogio-bloco {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .relogio {
+      font-size: 2.8rem;
+      font-weight: 300;
+      letter-spacing: -1px;
+      color: #1a1a1a;
+      line-height: 1;
+    }
+    .data-hoje {
+      font-size: 0.8rem;
+      color: #aaaaaa;
+      margin-top: 6px;
+      letter-spacing: 0.3px;
+    }
+
+    /* Calendário */
+    .calendario-secao {
+      margin-top: 56px;
+      width: 90%;
+      max-width: 420px;
+    }
+    .calendario-header {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #bbbbbb;
+      margin-bottom: 14px;
+    }
+    .calendario-titulo {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #1a1a1a;
+      margin-bottom: 12px;
+    }
+    .calendario-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+    .cal-dow {
+      text-align: center;
+      font-size: 0.6rem;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #cccccc;
+      padding-bottom: 6px;
+    }
+    .cal-dia {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #555555;
+      padding: 6px 2px;
+      border-radius: 50%;
+      line-height: 1.6;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cal-dia.vazio { visibility: hidden; }
+    .cal-dia.hoje {
+      background: #1a1a1a;
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    /* Seletor de usuário */
+    .seletor {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+    .seletor button {
+      flex: 1;
+      max-width: 140px;
+      padding: 8px 0;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 100px;
+      background: transparent;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #aaaaaa;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+    .seletor button.ativo {
+      background: #1a1a1a;
+      border-color: #1a1a1a;
+      color: #ffffff;
+    }
+    .aviso {
+      margin-top: 20px;
+      width: 90%;
+      max-width: 420px;
+      font-size: 0.82rem;
+      color: #888888;
+      font-style: italic;
+      text-align: center;
+      min-height: 1.2em;
+      transition: opacity 0.4s ease;
+    }
+
+    /* ── Abas de navegação ─────────────────────────────────── */
+    .abas-nav {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+    .abas-nav button {
+      flex: 1;
+      max-width: 160px;
+      padding: 9px 0;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 100px;
+      background: transparent;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #aaaaaa;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+    .abas-nav button.ativa {
+      background: #1a1a1a;
+      border-color: #1a1a1a;
+      color: #ffffff;
+    }
+
+    /* ── Aba Observações ───────────────────────────────────── */
+    .obs-secao {
+      width: 90%;
+      max-width: 420px;
+      margin-top: 32px;
+    }
+    .obs-titulo {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #bbbbbb;
+      margin-bottom: 14px;
+    }
+    .obs-subtitulo {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #888888;
+      margin-bottom: 10px;
+      margin-top: 24px;
+    }
+    .obs-campo label {
+      display: block;
+      font-size: 0.7rem;
+      color: #aaaaaa;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+      margin-top: 16px;
+    }
+    .obs-campo textarea {
+      width: 100%;
+      border: 1.5px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      color: #1a1a1a;
+      background: #fafafa;
+      resize: none;
+      outline: none;
+      line-height: 1.5;
+      transition: border-color 0.18s;
+    }
+    .obs-campo textarea:focus {
+      border-color: #aaaaaa;
+    }
+    .obs-data-linha {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .obs-data-input {
+      border: 1.5px solid #e8e8e8;
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-family: inherit;
+      font-size: 0.8rem;
+      color: #555555;
+      background: #fafafa;
+      outline: none;
+    }
+    .obs-btn-salvar {
+      display: block;
+      width: 100%;
+      margin-top: 20px;
+      padding: 12px;
+      border: none;
+      border-radius: 100px;
+      background: #1a1a1a;
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.18s;
+    }
+    .obs-btn-salvar:active { opacity: 0.75; }
+    .obs-salvo-msg {
+      text-align: center;
+      font-size: 0.78rem;
+      color: #aaaaaa;
+      margin-top: 10px;
+      min-height: 1.2em;
+    }
+
+    /* ── Histórico ─────────────────────────────────────────── */
+    .hist-mes {
+      margin-top: 28px;
+    }
+    .hist-mes-titulo {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #cccccc;
+      margin-bottom: 12px;
+    }
+    .hist-entrada {
+      border-left: 2px solid #e8e8e8;
+      padding: 8px 0 8px 14px;
+      margin-bottom: 14px;
+    }
+    .hist-meta {
+      font-size: 0.7rem;
+      color: #aaaaaa;
+      margin-bottom: 6px;
+    }
+    .hist-campo-nome {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: #bbbbbb;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 8px;
+      margin-bottom: 2px;
+    }
+    .hist-campo-val {
+      font-size: 0.83rem;
+      color: #444444;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+    .hist-vazio {
+      font-size: 0.85rem;
+      color: #cccccc;
+      font-style: italic;
+      margin-top: 16px;
+    }
+
+    /* ── Aba Relatório Mensal ──────────────────────────────── */
+    .rel-secao {
+      width: 90%;
+      max-width: 420px;
+      margin-top: 32px;
+    }
+    .rel-titulo {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #bbbbbb;
+      margin-bottom: 14px;
+    }
+    .rel-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .rel-nav-btn {
+      background: none;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      font-size: 1rem;
+      color: #aaaaaa;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.18s;
+    }
+    .rel-nav-btn:active { border-color: #aaaaaa; }
+    .rel-mes-label {
+      font-size: 1rem;
+      font-weight: 500;
+      color: #1a1a1a;
+    }
+    .rel-aviso-fechamento {
+      background: #f5f5f5;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 0.83rem;
+      color: #555555;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .rel-pessoa {
+      margin-bottom: 32px;
+    }
+    .rel-pessoa-nome {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #888888;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1.5px solid #f0f0f0;
+    }
+    .rel-stat {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 8px 0;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .rel-stat-label {
+      font-size: 0.82rem;
+      color: #888888;
+    }
+    .rel-stat-val {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #1a1a1a;
+    }
+    .rel-resumo-titulo {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #cccccc;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+    .rel-resumo-item {
+      font-size: 0.82rem;
+      color: #555555;
+      line-height: 1.6;
+      padding: 6px 0 6px 12px;
+      border-left: 2px solid #eeeeee;
+      margin-bottom: 8px;
+      white-space: pre-wrap;
+    }
+    .rel-vazio {
+      font-size: 0.83rem;
+      color: #cccccc;
+      font-style: italic;
+      margin-top: 8px;
+    }
+
+    /* ── Modal de dia (bottom sheet) ───────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      z-index: 200;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-sheet {
+      background: #ffffff;
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      max-width: 480px;
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: 20px 20px 40px;
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.10);
+    }
+    .modal-handle {
+      width: 36px;
+      height: 4px;
+      background: #e0e0e0;
+      border-radius: 2px;
+      margin: 0 auto 20px;
+    }
+    .modal-titulo {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 4px;
+    }
+    .modal-subtitulo {
+      font-size: 0.75rem;
+      color: #aaaaaa;
+      margin-bottom: 20px;
+    }
+    .modal-lista {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .modal-tarefa {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #f9f9f9;
+    }
+    .modal-tarefa-hora {
+      font-size: 0.75rem;
+      color: #aaaaaa;
+      min-width: 72px;
+      padding-top: 2px;
+    }
+    .modal-tarefa-info {
+      flex: 1;
+    }
+    .modal-tarefa-nome {
+      font-size: 0.88rem;
+      color: #1a1a1a;
+      font-weight: 500;
+    }
+    .modal-tarefa-cat {
+      font-size: 0.68rem;
+      color: #aaaaaa;
+      margin-top: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .modal-tarefa-acoes {
+      display: flex;
+      gap: 6px;
+      align-items: flex-start;
+    }
+    .modal-btn-acao {
+      background: none;
+      border: none;
+      color: #cccccc;
+      font-size: 0.85rem;
+      cursor: pointer;
+      padding: 2px 4px;
+      transition: color 0.15s;
+    }
+    .modal-btn-acao:hover { color: #888888; }
+    .modal-btn-add {
+      width: 100%;
+      padding: 11px;
+      border: 1.5px dashed #d8d8d8;
+      border-radius: 10px;
+      background: none;
+      font-family: inherit;
+      font-size: 0.85rem;
+      color: #aaaaaa;
+      cursor: pointer;
+      transition: border-color 0.18s, color 0.18s;
+      margin-bottom: 20px;
+    }
+    .modal-btn-add:hover { border-color: #999; color: #555; }
+    .modal-form {
+      border: 1.5px solid #eeeeee;
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .modal-form label {
+      font-size: 0.68rem;
+      color: #aaaaaa;
+      letter-spacing: 0.5px;
+      display: block;
+      margin-bottom: 3px;
+    }
+    .modal-form input,
+    .modal-form select {
+      width: 100%;
+      border: 1.5px solid #eeeeee;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      color: #1a1a1a;
+      background: #fafafa;
+      outline: none;
+    }
+    .modal-form input:focus,
+    .modal-form select:focus { border-color: #aaaaaa; }
+    .modal-form-linha {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .modal-btn-salvar-tarefa {
+      width: 100%;
+      padding: 11px;
+      border: none;
+      border-radius: 100px;
+      background: #1a1a1a;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .modal-btn-cancelar {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      background: none;
+      font-family: inherit;
+      font-size: 0.82rem;
+      color: #aaaaaa;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+    .cal-dia.clicavel { cursor: pointer; }
+    .cal-dia.clicavel:hover { background: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <nav class="seletor" id="seletor-usuario">
+    <button id="btn-jaqueline" class="ativo" onclick="selecionarUsuario('jaqueline')">Jaqueline</button>
+    <button id="btn-naomi" onclick="selecionarUsuario('naomi')">Naomi</button>
+  </nav>
+
+  <!-- Navegação entre abas -->
+  <nav class="abas-nav" id="abas-nav">
+    <button id="btn-aba-rotina" class="ativa" onclick="trocarAba('rotina')">Rotina</button>
+    <button id="btn-aba-obs" onclick="trocarAba('obs')">Observações</button>
+    <button id="btn-aba-rel" onclick="trocarAba('rel')">Relatório</button>
+  </nav>
+
+  <!-- ═══════════ ABA: ROTINA ═══════════ -->
+  <div id="aba-rotina">
+
+    <div class="cabecalho">
+      <h1>Ritmo Mo Wa</h1>
+      <p class="subtitulo">Sistema pessoal de rotina</p>
+    </div>
+
+    <!-- Relógio e data -->
+    <div class="relogio-bloco">
+      <p class="relogio" id="relogio">--:--</p>
+      <p class="data-hoje" id="data-hoje"></p>
+    </div>
+
+    <div class="dia-especial" id="dia-especial" style="display:none">
+      <span class="emoji" id="especial-emoji"></span>
+      <p class="msg" id="especial-msg"></p>
+      <p class="submsg" id="especial-submsg"></p>
+    </div>
+
+    <section id="secao-agora">
+      <p class="label">Agora</p>
+      <p class="tarefa" id="tarefa-atual">—</p>
+      <span class="horario" id="horario-atual"></span>
+    </section>
+
+    <section id="secao-proxima">
+      <p class="label">Próximo</p>
+      <p class="tarefa" id="tarefa-proxima">—</p>
+      <span class="horario" id="horario-proxima"></span>
+    </section>
+
+    <p class="faltam" id="faltam"></p>
+    <p class="aviso" id="aviso"></p>
+
+    <!-- Calendário do mês -->
+    <section class="calendario-secao" id="secao-calendario">
+      <p class="calendario-header">Calendário do mês</p>
+      <p class="calendario-titulo" id="calendario-titulo"></p>
+      <div class="calendario-grid" id="calendario-grid"></div>
+    </section>
+
+  </div><!-- fim aba-rotina -->
+
+  <!-- ═══════════ ABA: OBSERVAÇÕES ═══════════ -->
+  <div id="aba-obs" style="display:none; width:100%; display:none; flex-direction:column; align-items:center;">
+
+    <!-- Formulário de registro -->
+    <div class="obs-secao">
+      <p class="obs-titulo">Observações</p>
+
+      <div class="obs-data-linha">
+        <span class="obs-subtitulo" id="obs-pessoa-titulo">Jaqueline</span>
+        <input type="date" class="obs-data-input" id="obs-data" />
+      </div>
+
+      <div class="obs-campo">
+        <label>Alterações da rotina</label>
+        <textarea id="obs-alteracoes" rows="3" placeholder="O que mudou na rotina hoje?"></textarea>
+      </div>
+      <div class="obs-campo">
+        <label>Observações do dia</label>
+        <textarea id="obs-geral" rows="3" placeholder="Como foi o dia?"></textarea>
+      </div>
+      <div class="obs-campo">
+        <label>Dificuldades</label>
+        <textarea id="obs-dificuldades" rows="2" placeholder="O que travou ou pesou?"></textarea>
+      </div>
+      <div class="obs-campo">
+        <label>Ajustes necessários</label>
+        <textarea id="obs-ajustes" rows="2" placeholder="O que ajustar para os próximos dias?"></textarea>
+      </div>
+
+      <button class="obs-btn-salvar" onclick="salvarObservacao()">Salvar observação</button>
+      <p class="obs-salvo-msg" id="obs-salvo-msg"></p>
+    </div>
+
+    <!-- Histórico -->
+    <div class="obs-secao" id="obs-historico-container">
+      <p class="obs-titulo" style="margin-top:40px">Histórico</p>
+      <div id="obs-historico"></div>
+    </div>
+
+  </div><!-- fim aba-obs -->
+
+  <!-- ═══════════ ABA: RELATÓRIO ═══════════ -->
+  <div id="aba-rel" style="display:none; width:100%; flex-direction:column; align-items:center;">
+    <div class="rel-secao">
+      <p class="rel-titulo">Relatório mensal</p>
+
+      <!-- Navegação de mês -->
+      <div class="rel-nav">
+        <button class="rel-nav-btn" onclick="navMesRel(-1)" aria-label="Mês anterior">‹</button>
+        <span class="rel-mes-label" id="rel-mes-label"></span>
+        <button class="rel-nav-btn" onclick="navMesRel(1)" aria-label="Próximo mês">›</button>
+      </div>
+
+      <!-- Aviso de fechamento -->
+      <div class="rel-aviso-fechamento" id="rel-aviso-fechamento" style="display:none">
+        Fechamento do mês disponível.
+      </div>
+
+      <!-- Stats Jaqueline -->
+      <div class="rel-pessoa" id="rel-bloco-jaqueline">
+        <p class="rel-pessoa-nome">JAQUELINE</p>
+        <div id="rel-stats-jaqueline"></div>
+        <p class="rel-resumo-titulo">Resumo das observações</p>
+        <div id="rel-resumo-jaqueline"></div>
+      </div>
+
+      <!-- Stats Naomi -->
+      <div class="rel-pessoa" id="rel-bloco-naomi">
+        <p class="rel-pessoa-nome">NAOMI</p>
+        <div id="rel-stats-naomi"></div>
+        <p class="rel-resumo-titulo">Resumo das observações</p>
+        <div id="rel-resumo-naomi"></div>
+      </div>
+    </div>
+  </div><!-- fim aba-rel -->
+
+  <!-- Modal de dia -->
+  <div class="modal-overlay" id="modal-dia" style="display:none" onclick="fecharModalDia(event)">
+    <div class="modal-sheet" id="modal-sheet">
+      <div class="modal-handle"></div>
+      <p class="modal-titulo" id="modal-dia-titulo"></p>
+      <p class="modal-subtitulo" id="modal-dia-sub"></p>
+      <div class="modal-lista" id="modal-lista"></div>
+      <button class="modal-btn-add" id="modal-btn-add" onclick="mostrarFormAdd()">+ Adicionar tarefa</button>
+      <div class="modal-form" id="modal-form" style="display:none">
+        <div>
+          <label>Título da tarefa</label>
+          <input type="text" id="form-titulo" placeholder="Ex: Reunião de equipe" />
+        </div>
+        <div class="modal-form-linha">
+          <div><label>Horário inicial</label><input type="time" id="form-ini" /></div>
+          <div><label>Horário final</label><input type="time" id="form-fim" /></div>
+        </div>
+        <div>
+          <label>Categoria</label>
+          <select id="form-cat">
+            <option value="">— sem categoria —</option>
+            <option>produção</option><option>marketing</option><option>financeiro</option>
+            <option>descanso</option><option>saúde</option><option>feira</option>
+            <option>estudos</option><option>organização</option><option>conteúdo</option>
+            <option>reunião</option><option>logística</option><option>alimentação</option>
+          </select>
+        </div>
+        <button class="modal-btn-salvar-tarefa" id="modal-btn-salvar" onclick="salvarTarefaExtra()">Salvar tarefa</button>
+        <button class="modal-btn-cancelar" onclick="esconderFormAdd()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Rotina da Jaqueline ────────────────────────────────────
+    const jaquelineRoutine = {};
+
+    // Tarefas fixas (todos os dias normais)
+    jaquelineRoutine.fixas = [
+      { i: "07:30", f: "08:00", n: "Acordar" },
+      { i: "08:00", f: "08:30", n: "Organizar ambiente" },
+      { i: "08:30", f: "09:00", n: "Café da manhã" },
+      { i: "12:45", f: "14:00", n: "Almoço" },
+      { i: "15:30", f: "15:45", n: "Lanche" },
+      { i: "23:00", f: "23:59", n: "Dormir" },
+    ];
+
+    // Dias especiais
+    jaquelineRoutine.especiais = {
+      "2026-05-17": { emoji: "🌊", msg: "Folga total", sub: "Mar, descanso e leitura leve" },
+      "2026-05-22": { emoji: "🎪", msg: "FEIRA — Dia 1", sub: "Vender, fazer networking, registrar conteúdos, fazer pausas" },
+      "2026-05-23": { emoji: "🎪", msg: "FEIRA — Dia 2", sub: "Vender, fazer networking, registrar conteúdos, fazer pausas" },
+      "2026-05-24": { emoji: "🎪", msg: "FEIRA — Dia 3", sub: "Vender, fazer networking, registrar conteúdos, fazer pausas" },
+      "2026-05-26": { emoji: "🌊", msg: "Descanso total", sub: "Dormir mais, ir ao mar, nada de trabalho" },
+      "2026-05-31": { emoji: "🌊", msg: "Folga total", sub: "Mar, descanso, vida pessoal" },
+    };
+
+    // Tarefas específicas por dia
+    // Nota: blocos de produção com lanche são divididos em 14h–15h30 e 15h45–fim
+    jaquelineRoutine.dias = {
+      "2026-05-14": [
+        { i: "09:00", f: "10:00", n: "Revisar peças / conferir estoque / separar materiais" },
+        { i: "10:00", f: "10:15", n: "Pausa — água" },
+        { i: "10:15", f: "11:15", n: "Aula — Técnica de vendas" },
+        { i: "11:15", f: "12:45", n: "Organizar mesa da produção" },
+        { i: "14:00", f: "15:30", n: "Produção principal Mo Wa" },
+        { i: "15:45", f: "17:00", n: "Produção principal Mo Wa" },
+        { i: "17:00", f: "18:00", n: "Descanso — pausa mental" },
+        { i: "18:30", f: "19:20", n: "Terapia" },
+        { i: "19:30", f: "21:30", n: "Aula PrograMaria" },
+        { i: "22:00", f: "23:00", n: "Banho / descansar" },
+      ],
+      "2026-05-15": [
+        { i: "09:00", f: "10:00", n: "Reunião com Naomi — feira / marketing / organização" },
+        { i: "10:00", f: "10:15", n: "Pausa" },
+        { i: "10:15", f: "11:15", n: "Aula — Marketing digital" },
+        { i: "11:15", f: "12:45", n: "Organizar conteúdos da Mo Wa" },
+        { i: "14:00", f: "15:30", n: "Produção principal Mo Wa" },
+        { i: "15:45", f: "17:00", n: "Produção principal Mo Wa" },
+        { i: "17:30", f: "18:00", n: "Caminhada leve" },
+        { i: "19:00", f: "19:30", n: "Café da noite / banho" },
+        { i: "19:30", f: "21:30", n: "Aula PrograMaria" },
+        { i: "22:00", f: "23:00", n: "Descansar" },
+      ],
+      "2026-05-16": [
+        { i: "09:00", f: "11:30", n: "Jornada Águas de Março — Aula 1" },
+        { i: "11:30", f: "12:00", n: "Pausa mental — sem celular" },
+        { i: "12:00", f: "12:45", n: "Atividade da aula / reflexões" },
+        { i: "14:00", f: "15:30", n: "Produção principal Mo Wa" },
+        { i: "15:45", f: "17:00", n: "Produção principal Mo Wa" },
+        { i: "17:30", f: "18:00", n: "Alongamento leve" },
+        { i: "18:00", f: "20:00", n: "Produção complementar" },
+        { i: "20:00", f: "21:00", n: "Café da noite / banho / descanso" },
+      ],
+      "2026-05-18": [
+        { i: "09:00", f: "10:30", n: "Reunião estratégica Mo Wa — calendário / feira / organização" },
+        { i: "10:30", f: "11:00", n: "Pausa" },
+        { i: "11:00", f: "12:45", n: "Planejar conteúdos da feira" },
+        { i: "14:00", f: "15:30", n: "Produção principal Mo Wa" },
+        { i: "15:45", f: "17:00", n: "Produção principal Mo Wa" },
+        { i: "18:00", f: "20:00", n: "Produção complementar" },
+        { i: "20:00", f: "21:00", n: "Café da noite / banho / descanso" },
+      ],
+      "2026-05-19": [
+        { i: "09:00", f: "10:00", n: "Organizar financeiro pessoal" },
+        { i: "10:00", f: "10:15", n: "Pausa" },
+        { i: "10:15", f: "11:15", n: "Aula — Precificação e gestão financeira" },
+        { i: "11:15", f: "12:45", n: "Organizar materiais da feira" },
+        { i: "14:00", f: "15:30", n: "Acabamentos finais das peças" },
+        { i: "15:45", f: "17:00", n: "Acabamentos finais das peças" },
+        { i: "18:00", f: "20:00", n: "Etiquetas / organização / separar peças prontas" },
+        { i: "20:00", f: "23:00", n: "Descanso / leitura leve" },
+      ],
+      "2026-05-20": [
+        { i: "09:00", f: "11:30", n: "Jornada Águas de Março — Aula 2" },
+        { i: "11:30", f: "12:00", n: "Pausa mental" },
+        { i: "12:00", f: "12:45", n: "Atividade da aula" },
+        { i: "14:00", f: "15:30", n: "Conferir peças / revisar acabamentos / embalar" },
+        { i: "15:45", f: "17:00", n: "Conferir peças / revisar acabamentos / embalar" },
+        { i: "17:30", f: "18:00", n: "Atividade física" },
+        { i: "18:00", f: "20:00", n: "Conferência final da feira / organização" },
+        { i: "20:00", f: "23:00", n: "Descanso total" },
+      ],
+      "2026-05-21": [
+        { i: "09:00", f: "10:00", n: "Conferir checklist da feira" },
+        { i: "10:00", f: "10:15", n: "Pausa" },
+        { i: "10:15", f: "11:15", n: "Organizar mala e materiais" },
+        { i: "11:15", f: "12:45", n: "Programar conteúdos da feira" },
+        { i: "14:00", f: "16:00", n: "Acabamentos leves" },
+        { i: "16:00", f: "17:00", n: "Descanso" },
+        { i: "18:30", f: "19:20", n: "Terapia" },
+        { i: "19:20", f: "23:00", n: "Banho / café da noite / descanso" },
+      ],
+      "2026-05-25": [
+        { i: "09:00", f: "10:30", n: "Organizar peças restantes / guardar materiais" },
+        { i: "10:30", f: "11:00", n: "Pausa" },
+        { i: "11:00", f: "12:45", n: "Reunião leve com Naomi — balanço da feira" },
+        { i: "14:00", f: "17:00", n: "Descanso / Mar" },
+      ],
+      "2026-05-27": [
+        { i: "09:00", f: "11:30", n: "Jornada Águas de Março — Aula 3" },
+        { i: "11:30", f: "12:00", n: "Pausa mental" },
+        { i: "12:00", f: "12:45", n: "Atividade da aula" },
+        { i: "14:00", f: "17:00", n: "Produção leve — manutenção de estoque" },
+        { i: "17:30", f: "18:00", n: "Atividade física" },
+        { i: "19:00", f: "23:00", n: "Descanso" },
+      ],
+      "2026-05-28": [
+        { i: "09:00", f: "10:00", n: "Planejamento marketing Mo Wa" },
+        { i: "10:00", f: "10:15", n: "Pausa" },
+        { i: "10:15", f: "11:15", n: "Aula — Design e criatividade" },
+        { i: "11:15", f: "12:45", n: "Branding do projeto de Naomi" },
+        { i: "14:00", f: "17:00", n: "Produção estoque Mo Wa" },
+        { i: "18:30", f: "19:20", n: "Terapia" },
+        { i: "19:20", f: "23:00", n: "Descanso" },
+      ],
+      "2026-05-29": [
+        { i: "09:00", f: "11:30", n: "Jornada Águas de Março — Aula 4" },
+        { i: "11:30", f: "12:00", n: "Pausa mental" },
+        { i: "12:00", f: "12:45", n: "Atividade da aula" },
+        { i: "14:00", f: "15:30", n: "Produção estoque Mo Wa" },
+        { i: "15:45", f: "17:00", n: "Produção estoque Mo Wa" },
+        { i: "17:30", f: "18:00", n: "Caminhada" },
+        { i: "19:00", f: "23:00", n: "Descanso" },
+      ],
+      "2026-05-30": [
+        { i: "09:00", f: "10:00", n: "Leitura leve" },
+        { i: "10:00", f: "10:15", n: "Pausa" },
+        { i: "10:15", f: "11:15", n: "Organizar próxima semana" },
+        { i: "11:15", f: "12:45", n: "Aula leve Artesol" },
+        { i: "14:00", f: "16:00", n: "Produção leve estoque" },
+        { i: "16:00", f: "17:00", n: "Mar" },
+        { i: "17:30", f: "18:00", n: "Alongamento" },
+        { i: "19:00", f: "23:00", n: "Descanso" },
+      ],
+    };
+
+    // ── Rotina da Naomi ────────────────────────────────────
+    const naomiRoutine = {};
+
+    // Regras fixas aplicadas em todos os dias normais
+    naomiRoutine.fixas = [
+      { i: "07:30", f: "08:00", n: "Acordar" },
+      { i: "08:00", f: "08:30", n: "Organizar ambiente e checklist" },
+      { i: "08:30", f: "09:00", n: "Café e revisar prioridades" },
+    ];
+
+    // Dias especiais (folga total ou feira)
+    naomiRoutine.especiais = {
+      "2026-05-17": { emoji: "🌊", msg: "Folga total", sub: "Mar, leitura leve, descanso — sem trabalho" },
+      "2026-05-22": { emoji: "🎪", msg: "FEIRA — Dia 1", sub: "Artesanato da Bahia — vender, registrar, se divertir" },
+      "2026-05-23": { emoji: "🎪", msg: "FEIRA — Dia 2", sub: "Artesanato da Bahia — vender, registrar, se divertir" },
+      "2026-05-24": { emoji: "🎪", msg: "FEIRA — Dia 3", sub: "Artesanato da Bahia — vender, registrar, se divertir" },
+      "2026-05-25": { emoji: "🌊", msg: "Descanso total", sub: "Voltar para casa, descansar — sem cobranças" },
+      "2026-05-31": { emoji: "🌊", msg: "Folga total", sub: "Descanso, mar, leitura leve, vida pessoal" },
+    };
+
+    // Tarefas específicas por dia
+    naomiRoutine.dias = {
+      "2026-05-14": [
+        { i: "10:00", f: "10:15", n: "Pausa" },
+        { i: "10:15", f: "11:15", n: "Produção de brincos" },
+        { i: "11:15", f: "12:45", n: "Almoço e praia" },
+        { i: "14:00", f: "15:30", n: "Criar perfil Trello e checklists" },
+        { i: "15:30", f: "15:45", n: "Lanche" },
+        { i: "15:45", f: "16:00", n: "Criar perfil Trello e checklists" },
+        { i: "16:00", f: "17:00", n: "Alimentar chat com dados da reunião financeira" },
+        { i: "18:30", f: "19:30", n: "Andar de bicicleta ou com cachorros" },
+        { i: "20:00", f: "23:00", n: "Café da noite, banho e descanso" },
+      ],
+      "2026-05-15": [
+        { i: "09:00", f: "10:30", n: "Pagamento Luciana e produção de brincos da feira" },
+        { i: "10:30", f: "10:45", n: "Pausa" },
+        { i: "10:45", f: "12:45", n: "Stories Mo Wa, resgatar clientes e conferir papelaria" },
+        { i: "12:45", f: "14:00", n: "Almoço e descanso" },
+        { i: "14:00", f: "15:30", n: "Estudar estratégia de marketing" },
+        { i: "15:30", f: "15:45", n: "Lanche" },
+        { i: "15:45", f: "16:00", n: "Estudar estratégia de marketing" },
+        { i: "16:00", f: "17:00", n: "Organizar reunião financeira" },
+        { i: "17:00", f: "18:00", n: "Atividade física" },
+        { i: "19:00", f: "20:00", n: "Aula online / leitura / pesquisa" },
+        { i: "20:00", f: "23:00", n: "Descanso" },
+      ],
+      "2026-05-16": [
+        { i: "09:00", f: "11:00", n: "Stories Mo Wa, inscrição APEX Paris e estudar exportação" },
+        { i: "11:00", f: "11:15", n: "Pausa" },
+        { i: "11:15", f: "12:45", n: "Aula Artesanato da Bahia" },
+        { i: "14:00", f: "15:30", n: "Produzir 3 pares de brincos" },
+        { i: "15:30", f: "15:45", n: "Lanche" },
+        { i: "15:45", f: "17:00", n: "Produzir 3 pares de brincos" },
+        { i: "17:00", f: "18:00", n: "Atividade física" },
+        { i: "19:00", f: "23:00", n: "Postar conteúdo feira, finalizar brincos e descanso" },
+      ],
+      "2026-05-18": [
+        { i: "09:00", f: "11:00", n: "Stories Mo Wa, reunião Andreia Sebrae e reunião estratégica" },
+        { i: "11:00", f: "12:45", n: "Exu, almoço e praia" },
+        { i: "14:00", f: "15:30", n: "Etiquetar peças e preparar etiquetas de preço" },
+        { i: "15:30", f: "15:45", n: "Lanche" },
+        { i: "15:45", f: "17:00", n: "Revisar mentoria marketing e resultados Sebrae" },
+        { i: "17:00", f: "18:00", n: "Atividade física" },
+        { i: "19:00", f: "23:00", n: "Postar conteúdo feed, leitura, pesquisa e descanso" },
+      ],
+      "2026-05-19": [
+        { i: "09:00", f: "10:30", n: "Stories Mo Wa e atualizar financeiro" },
+        { i: "10:30", f: "11:00", n: "Pausa" },
+        { i: "11:00", f: "12:00", n: "Repasses maquineta Acesso Nosso" },
+        { i: "12:00", f: "13:45", n: "Almoço e descanso" },
+        { i: "14:00", f: "15:00", n: "Etiquetas peças feira" },
+        { i: "15:00", f: "15:30", n: "Pensar decoração do stand" },
+        { i: "15:30", f: "15:45", n: "Lanche" },
+        { i: "16:00", f: "17:00", n: "Terapia" },
+        { i: "17:00", f: "18:00", n: "Comprar lanches para a feira" },
+        { i: "18:00", f: "23:00", n: "Postar conteúdo feed, leitura leve e descanso" },
+      ],
+      "2026-05-20": [
+        { i: "09:00", f: "11:00", n: "Stories Mo Wa e estudar APEX e exportação" },
+        { i: "11:00", f: "11:15", n: "Pausa" },
+        { i: "11:15", f: "12:00", n: "Produzir conteúdo e organizar editorial Instagram" },
+        { i: "12:00", f: "13:45", n: "Almoço e descanso" },
+        { i: "14:00", f: "15:00", n: "Checklist final feira" },
+        { i: "15:00", f: "15:30", n: "Conferir peças, embalagens e criar tabela de vendas" },
+        { i: "15:30", f: "15:45", n: "Lanche" },
+        { i: "15:45", f: "17:00", n: "Etiquetas peças feira" },
+        { i: "17:00", f: "18:00", n: "Atividade física" },
+        { i: "18:00", f: "23:00", n: "Postar conteúdo, arrumar mala, organizar lanches e descanso" },
+      ],
+      "2026-05-21": [
+        { i: "09:00", f: "10:00", n: "Stories Mo Wa, pedir maquineta e conferir checklist feira" },
+        { i: "10:00", f: "10:15", n: "Pausa" },
+        { i: "10:15", f: "11:15", n: "Organizar carro para viagem" },
+        { i: "11:15", f: "12:45", n: "Almoço e descanso" },
+        { i: "14:00", f: "15:30", n: "Viajar e comprar embalagens feira" },
+        { i: "18:00", f: "23:00", n: "Postar conteúdo feed, brincar com Mallu e descanso" },
+      ],
+      "2026-05-26": [
+        { i: "11:00", f: "12:00", n: "Repasses maquineta Acesso Nosso" },
+        { i: "12:00", f: "23:00", n: "Descanso total — mar, leitura leve" },
+      ],
+      "2026-05-27": [
+        { i: "09:00", f: "10:30", n: "Stories Mo Wa, revisar resultados feira, reunião e financeiro" },
+        { i: "10:30", f: "11:00", n: "Pausa" },
+        { i: "11:00", f: "12:45", n: "Organizar cronograma obra" },
+        { i: "12:45", f: "14:00", n: "Almoço e descanso" },
+        { i: "14:00", f: "15:00", n: "Aulas Artesanato da Bahia" },
+        { i: "15:00", f: "17:00", n: "Definir e transcrever receitas, pesquisar plataformas" },
+        { i: "17:00", f: "18:00", n: "Atividade física e postar conteúdo feed" },
+        { i: "19:00", f: "23:00", n: "Descanso" },
+      ],
+      "2026-05-28": [
+        { i: "09:00", f: "10:30", n: "Stories Mo Wa e aula Artesanato da Bahia" },
+        { i: "10:30", f: "11:00", n: "Pausa" },
+        { i: "11:00", f: "12:45", n: "Finalizar receitas para venda na internet" },
+        { i: "12:45", f: "14:00", n: "Almoço e praia" },
+        { i: "14:00", f: "15:30", n: "Organizar material oficina" },
+        { i: "15:30", f: "15:45", n: "Lanche" },
+        { i: "15:45", f: "17:00", n: "Organizar material oficina" },
+        { i: "17:00", f: "18:00", n: "Atividade física e postar conteúdo feed" },
+        { i: "19:00", f: "23:00", n: "Leitura leve e descanso" },
+      ],
+      "2026-05-29": [
+        { i: "09:00", f: "10:00", n: "Stories, revisar financeiro maio e organizar reunião fechamento" },
+        { i: "10:00", f: "10:15", n: "Pausa" },
+        { i: "10:15", f: "12:45", n: "Finalizar material reunião fechamento do mês" },
+        { i: "12:45", f: "14:00", n: "Almoço e descanso" },
+        { i: "14:00", f: "16:00", n: "Planejamento de conteúdo junho" },
+        { i: "16:00", f: "18:00", n: "Organizar material oficina e postar conteúdo feed" },
+        { i: "19:00", f: "23:00", n: "Descanso" },
+      ],
+      "2026-05-30": [
+        { i: "09:00", f: "11:45", n: "Reunião fechamento financeiro maio" },
+        { i: "12:45", f: "14:00", n: "Almoço e descanso" },
+        { i: "14:00", f: "16:00", n: "Mar e descanso" },
+        { i: "19:00", f: "23:00", n: "Descanso" },
+      ],
+    };
+
+    // ── Utilitários ────────────────────────────────────────────
+    function toMin(hhmm) {
+      const [h, m] = hhmm.split(":").map(Number);
+      return h * 60 + m;
+    }
+
+    function fmt(hhmm) {
+      return hhmm.replace(":", "h");
+    }
+
+    function getDataKey(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    // Retorna tarefas do dia combinando fixas + específicas de uma rotina
+    function getTarefasHoje(rotina, dataKey) {
+      const especificas = rotina.dias[dataKey] || [];
+
+      const fixasFiltradas = rotina.fixas.filter(fixa => {
+        const fixMin = toMin(fixa.i);
+        return !especificas.some(esp => {
+          return fixMin >= toMin(esp.i) && fixMin < toMin(esp.f);
+        });
+      });
+
+      return [...fixasFiltradas, ...especificas]
+        .sort((a, b) => toMin(a.i) - toMin(b.i));
+    }
+
+    // ── Lógica principal ───────────────────────────────────────
+    function atualizar() {
+      const agora = new Date();
+      const dataKey = getDataKey(agora);
+      const agoraMin = agora.getHours() * 60 + agora.getMinutes();
+
+      const secaoAgora   = document.getElementById("secao-agora");
+      const secaoProxima = document.getElementById("secao-proxima");
+      const divEspecial  = document.getElementById("dia-especial");
+      const elFaltam     = document.getElementById("faltam");
+
+      // Seleciona a rotina ativa
+      const rotina = usuarioAtivo === "naomi" ? naomiRoutine : jaquelineRoutine;
+
+      // Dia especial?
+      if (rotina.especiais[dataKey]) {
+        const esp = rotina.especiais[dataKey];
+        document.getElementById("especial-emoji").textContent  = esp.emoji;
+        document.getElementById("especial-msg").textContent    = esp.msg;
+        document.getElementById("especial-submsg").textContent = esp.sub;
+        divEspecial.style.display  = "block";
+        secaoAgora.style.display   = "none";
+        secaoProxima.style.display = "none";
+        elFaltam.textContent       = "";
+        return;
+      }
+
+      divEspecial.style.display  = "none";
+      secaoAgora.style.display   = "block";
+      secaoProxima.style.display = "block";
+
+      const tarefas = getTarefasHojeFiltradas(rotina, dataKey, usuarioAtivo);
+
+      let atual   = null;
+      let proxima = null;
+
+      for (let i = 0; i < tarefas.length; i++) {
+        const t = tarefas[i];
+        if (agoraMin >= toMin(t.i) && agoraMin < toMin(t.f)) {
+          atual   = t;
+          proxima = tarefas[i + 1] || null;
+          break;
+        }
+        if (agoraMin < toMin(t.i) && !proxima) {
+          proxima = t;
+        }
+      }
+
+      // Agora
+      if (atual) {
+        document.getElementById("tarefa-atual").textContent  = atual.n;
+        document.getElementById("horario-atual").textContent = fmt(atual.i) + " — " + fmt(atual.f);
+      } else {
+        document.getElementById("tarefa-atual").textContent  = "Nenhuma tarefa ativa";
+        document.getElementById("horario-atual").textContent = "";
+      }
+
+      // Próximo + contador
+      const elAviso = document.getElementById("aviso");
+      if (proxima) {
+        document.getElementById("tarefa-proxima").textContent  = proxima.n;
+        document.getElementById("horario-proxima").textContent = fmt(proxima.i) + " — " + fmt(proxima.f);
+        const faltam = toMin(proxima.i) - agoraMin;
+
+        // Formato horas + minutos
+        let faltamTexto;
+        if (faltam <= 0) {
+          faltamTexto = "";
+        } else if (faltam >= 60) {
+          const h = Math.floor(faltam / 60);
+          const m = faltam % 60;
+          faltamTexto = m > 0 ? h + "h " + m + "min" : h + "h";
+        } else {
+          faltamTexto = faltam + "min";
+        }
+        elFaltam.textContent = faltamTexto ? "Faltam " + faltamTexto + " para a próxima tarefa" : "";
+
+        // Avisos suaves
+        if (faltam <= 5 && faltam > 0) {
+          elAviso.textContent = "Hora da próxima tarefa.";
+        } else if (faltam <= 10) {
+          elAviso.textContent = "Prepare água e materiais.";
+        } else if (faltam <= 20) {
+          elAviso.textContent = "Comece a desacelerar aos poucos.";
+        } else if (faltam <= 30) {
+          elAviso.textContent = "Sua próxima transição começa em 30 minutos.";
+        } else {
+          elAviso.textContent = "";
+        }
+      } else {
+        document.getElementById("tarefa-proxima").textContent  = "Sem próxima tarefa";
+        document.getElementById("horario-proxima").textContent = "";
+        elFaltam.textContent = "";
+        elAviso.textContent  = "";
+      }
+    }
+
+    // ── Seletor de usuário ─────────────────────────────────────
+    let usuarioAtivo = "jaqueline";
+
+    function selecionarUsuario(usuario) {
+      usuarioAtivo = usuario;
+
+      document.getElementById("btn-jaqueline").classList.toggle("ativo", usuario === "jaqueline");
+      document.getElementById("btn-naomi").classList.toggle("ativo", usuario === "naomi");
+
+      atualizar();
+    }
+
+    // ── Relógio, data e calendário ─────────────────────────
+    const DIAS_SEMANA = ["Domingo","Segunda-feira","Terça-feira","Quarta-feira","Quinta-feira","Sexta-feira","Sábado"];
+    const MESES       = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+    const MESES_CAP   = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+    const DOW_SIGLAS  = ["D","S","T","Q","Q","S","S"];
+
+    function atualizarRelogioEData() {
+      const agora = new Date();
+      const hh = String(agora.getHours()).padStart(2, "0");
+      const mm = String(agora.getMinutes()).padStart(2, "0");
+      document.getElementById("relogio").textContent = hh + ":" + mm;
+      const diaSem = DIAS_SEMANA[agora.getDay()];
+      const dia    = agora.getDate();
+      const mes    = MESES[agora.getMonth()];
+      const ano    = agora.getFullYear();
+      document.getElementById("data-hoje").textContent =
+        diaSem + ", " + dia + " de " + mes + " de " + ano;
+    }
+
+    function renderCalendario() {
+      const agora   = new Date();
+      const ano     = agora.getFullYear();
+      const mes     = agora.getMonth();
+      const hoje    = agora.getDate();
+      const nomeMes = MESES_CAP[mes];
+
+      document.getElementById("calendario-titulo").textContent = nomeMes + " de " + ano;
+
+      const primeiroDia = new Date(ano, mes, 1).getDay(); // 0=dom
+      const totalDias   = new Date(ano, mes + 1, 0).getDate();
+      const grid        = document.getElementById("calendario-grid");
+      grid.innerHTML    = "";
+
+      // Cabeçalho dias da semana
+      DOW_SIGLAS.forEach(function(s) {
+        const el = document.createElement("div");
+        el.className = "cal-dow";
+        el.textContent = s;
+        grid.appendChild(el);
+      });
+
+      // Células vazias antes do dia 1
+      for (let v = 0; v < primeiroDia; v++) {
+        const el = document.createElement("div");
+        el.className = "cal-dia vazio";
+        grid.appendChild(el);
+      }
+
+      // Dias do mês
+      for (let d = 1; d <= totalDias; d++) {
+        const el = document.createElement("div");
+        el.className = "cal-dia clicavel" + (d === hoje ? " hoje" : "");
+        el.textContent = d;
+        (function(dia, a, m) {
+          el.onclick = function() { abrirModalDia(dia, a, m); };
+        })(d, ano, mes);
+        grid.appendChild(el);
+      }
+    }
+
+    atualizarRelogioEData();
+    renderCalendario();
+    setInterval(atualizarRelogioEData, 1000);
+
+    atualizar();
+    setInterval(atualizar, 60 * 1000);
+
+    // ── Registro do Service Worker (PWA) ──────────────────────
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js");
+    }
+
+    // ── Abas de navegação ──────────────────────────────────────
+    let abaAtiva = "rotina";
+
+    function trocarAba(aba) {
+      abaAtiva = aba;
+      document.getElementById("aba-rotina").style.display = aba === "rotina" ? "" : "none";
+      document.getElementById("aba-obs").style.display    = aba === "obs"    ? "flex" : "none";
+      document.getElementById("btn-aba-rotina").classList.toggle("ativa", aba === "rotina");
+      document.getElementById("btn-aba-obs").classList.toggle("ativa", aba === "obs");
+      if (aba === "obs") {
+        carregarFormulario();
+        renderHistorico();
+      }
+    }
+
+    // ── Observações — utilitários ──────────────────────────────
+    function obsKey(usuario, dataStr) {
+      return "ritmo_obs_" + usuario + "_" + dataStr;
+    }
+
+    function dataHojeStr() {
+      const d = new Date();
+      return d.getFullYear() + "-" +
+        String(d.getMonth() + 1).padStart(2, "0") + "-" +
+        String(d.getDate()).padStart(2, "0");
+    }
+
+    function carregarFormulario() {
+      const pessoa = usuarioAtivo;
+      const data   = document.getElementById("obs-data").value || dataHojeStr();
+      document.getElementById("obs-data").value = data;
+      document.getElementById("obs-pessoa-titulo").textContent =
+        pessoa === "naomi" ? "Naomi" : "Jaqueline";
+      const salvo = JSON.parse(localStorage.getItem(obsKey(pessoa, data)) || "{}");
+      document.getElementById("obs-alteracoes").value   = salvo.alteracoes   || "";
+      document.getElementById("obs-geral").value        = salvo.geral        || "";
+      document.getElementById("obs-dificuldades").value = salvo.dificuldades || "";
+      document.getElementById("obs-ajustes").value      = salvo.ajustes      || "";
+      document.getElementById("obs-salvo-msg").textContent = "";
+    }
+
+    function salvarObservacao() {
+      const pessoa = usuarioAtivo;
+      const data   = document.getElementById("obs-data").value || dataHojeStr();
+      const dados  = {
+        alteracoes:   document.getElementById("obs-alteracoes").value.trim(),
+        geral:        document.getElementById("obs-geral").value.trim(),
+        dificuldades: document.getElementById("obs-dificuldades").value.trim(),
+        ajustes:      document.getElementById("obs-ajustes").value.trim(),
+        pessoa:       pessoa,
+        data:         data,
+        salvoEm:      new Date().toISOString(),
+      };
+      localStorage.setItem(obsKey(pessoa, data), JSON.stringify(dados));
+      const msg = document.getElementById("obs-salvo-msg");
+      msg.textContent = "Salvo com sucesso.";
+      setTimeout(function() { msg.textContent = ""; }, 2500);
+      renderHistorico();
+    }
+
+    // Recarrega form ao trocar data ou pessoa
+    document.getElementById("obs-data").addEventListener("change", function() {
+      if (abaAtiva === "obs") carregarFormulario();
+    });
+
+    // ── Histórico ──────────────────────────────────────────────
+    const MESES_HIST = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+                        "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+    const DIAS_HIST  = ["domingo","segunda","terça","quarta","quinta","sexta","sábado"];
+
+    function renderHistorico() {
+      const container = document.getElementById("obs-historico");
+      container.innerHTML = "";
+
+      // Coletar todas as chaves de observação
+      const entradas = [];
+      for (let k = 0; k < localStorage.length; k++) {
+        const chave = localStorage.key(k);
+        if (!chave.startsWith("ritmo_obs_")) continue;
+        const dados = JSON.parse(localStorage.getItem(chave) || "{}");
+        if (!dados.data) continue;
+        // Verifica se tem pelo menos um campo preenchido
+        if (!dados.alteracoes && !dados.geral && !dados.dificuldades && !dados.ajustes) continue;
+        entradas.push(dados);
+      }
+
+      if (entradas.length === 0) {
+        container.innerHTML = '<p class="hist-vazio">Nenhuma observação registrada ainda.</p>';
+        return;
+      }
+
+      // Ordenar por data DESC
+      entradas.sort(function(a, b) { return b.data.localeCompare(a.data); });
+
+      // Agrupar por mês
+      const porMes = {};
+      entradas.forEach(function(e) {
+        const partes = e.data.split("-");
+        const chMes  = partes[0] + "-" + partes[1];
+        if (!porMes[chMes]) porMes[chMes] = [];
+        porMes[chMes].push(e);
+      });
+
+      const CAMPOS = [
+        { key: "alteracoes",   label: "Alterações da rotina" },
+        { key: "geral",        label: "Observações do dia" },
+        { key: "dificuldades", label: "Dificuldades" },
+        { key: "ajustes",      label: "Ajustes necessários" },
+      ];
+
+      Object.keys(porMes).sort(function(a,b){ return b.localeCompare(a); }).forEach(function(chMes) {
+        const partesMes = chMes.split("-");
+        const nomeMes   = MESES_HIST[parseInt(partesMes[1], 10) - 1] + " de " + partesMes[0];
+
+        const divMes = document.createElement("div");
+        divMes.className = "hist-mes";
+        divMes.innerHTML = '<p class="hist-mes-titulo">' + nomeMes + '</p>';
+
+        porMes[chMes].forEach(function(e) {
+          const dObj   = new Date(e.data + "T12:00:00");
+          const diaSem = DIAS_HIST[dObj.getDay()];
+          const diaN   = dObj.getDate();
+          const nomePessoa = e.pessoa === "naomi" ? "Naomi" : "Jaqueline";
+
+          const divEnt = document.createElement("div");
+          divEnt.className = "hist-entrada";
+
+          let html = '<p class="hist-meta">' + diaSem + ', ' + diaN + ' — ' + nomePessoa + '</p>';
+          CAMPOS.forEach(function(campo) {
+            if (e[campo.key]) {
+              html += '<p class="hist-campo-nome">' + campo.label + '</p>';
+              html += '<p class="hist-campo-val">' + e[campo.key].replace(/</g, "&lt;") + '</p>';
+            }
+          });
+          divEnt.innerHTML = html;
+          divMes.appendChild(divEnt);
+        });
+
+        container.appendChild(divMes);
+      });
+    }
+
+    // ── init data no campo de observações ─────────────────────
+    document.getElementById("obs-data").value = dataHojeStr();
+
+    // ── Relatório mensal ───────────────────────────────────────
+    var relAno = new Date().getFullYear();
+    var relMes = new Date().getMonth(); // 0-indexed
+
+    var MESES_REL = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+                     "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+
+    function navMesRel(delta) {
+      relMes += delta;
+      if (relMes < 0)  { relMes = 11; relAno--; }
+      if (relMes > 11) { relMes = 0;  relAno++; }
+      renderRelatorio();
+    }
+
+    // Conta tarefas programadas para dias já decorridos do mês
+    function contarTarefasMes(rotina, ano, mes) {
+      var hoje = new Date();
+      var totalDias = new Date(ano, mes + 1, 0).getDate();
+      var limDia = (ano === hoje.getFullYear() && mes === hoje.getMonth())
+        ? hoje.getDate() : totalDias;
+      var count = 0;
+      for (var d = 1; d <= limDia; d++) {
+        var dk = ano + "-" + String(mes + 1).padStart(2, "0") + "-" + String(d).padStart(2, "0");
+        if (rotina.especiais[dk]) continue;
+        count += getTarefasHoje(rotina, dk).length;
+      }
+      return count;
+    }
+
+    // Coleta observações do mês para uma pessoa
+    function obsDoMes(pessoa, ano, mes) {
+      var prefixo = "ritmo_obs_" + pessoa + "_" + ano + "-" + String(mes + 1).padStart(2, "0");
+      var lista = [];
+      for (var k = 0; k < localStorage.length; k++) {
+        var chave = localStorage.key(k);
+        if (!chave.startsWith(prefixo)) continue;
+        var d = JSON.parse(localStorage.getItem(chave) || "{}");
+        if (d.data) lista.push(d);
+      }
+      lista.sort(function(a, b) { return a.data.localeCompare(b.data); });
+      return lista;
+    }
+
+    function renderBlocoPessoa(pessoa, rotina, ano, mes) {
+      var obs      = obsDoMes(pessoa, ano, mes);
+      var totalObs = obs.length;
+      var diasAlt  = obs.filter(function(e) { return e.alteracoes && e.alteracoes.trim(); }).length;
+      var tarefas  = contarTarefasMes(rotina, ano, mes);
+      var hoje     = new Date();
+      var ehMesAtual = (ano === hoje.getFullYear() && mes === hoje.getMonth());
+      var labelTarefas = ehMesAtual ? "Tarefas programadas (até hoje)" : "Tarefas programadas no mês";
+
+      // Stats
+      var statsEl = document.getElementById("rel-stats-" + pessoa);
+      statsEl.innerHTML = [
+        '<div class="rel-stat"><span class="rel-stat-label">' + labelTarefas + '</span><span class="rel-stat-val">' + tarefas + '</span></div>',
+        '<div class="rel-stat"><span class="rel-stat-label">Observações registradas</span><span class="rel-stat-val">' + totalObs + '</span></div>',
+        '<div class="rel-stat"><span class="rel-stat-label">Dias com alterações</span><span class="rel-stat-val">' + diasAlt + '</span></div>',
+      ].join("");
+
+      // Resumo: mostrar snippets de "geral" e "ajustes"
+      var resumoEl = document.getElementById("rel-resumo-" + pessoa);
+      var snippets = obs.filter(function(e) { return e.geral || e.ajustes; });
+      if (snippets.length === 0) {
+        resumoEl.innerHTML = '<p class="rel-vazio">Nenhuma observação registrada.</p>';
+      } else {
+        var html = "";
+        snippets.slice(-5).reverse().forEach(function(e) { // 5 mais recentes
+          var partes = e.data.split("-");
+          var diaNum = parseInt(partes[2], 10);
+          var texto  = (e.geral || e.ajustes || "").slice(0, 120);
+          if (texto.length === 120) texto += "…";
+          html += '<p class="rel-resumo-item"><strong>Dia ' + diaNum + ':</strong> ' +
+                  texto.replace(/</g, "&lt;") + '</p>';
+        });
+        resumoEl.innerHTML = html;
+      }
+    }
+
+    function renderRelatorio() {
+      // Label do mês
+      document.getElementById("rel-mes-label").textContent = MESES_REL[relMes] + " de " + relAno;
+
+      // Aviso de fechamento (apenas último dia do mês atual)
+      var hoje        = new Date();
+      var ultimoDia   = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
+      var ehMesAtual  = (relAno === hoje.getFullYear() && relMes === hoje.getMonth());
+      var ehUltimoDia = (hoje.getDate() === ultimoDia);
+      document.getElementById("rel-aviso-fechamento").style.display =
+        (ehMesAtual && ehUltimoDia) ? "" : "none";
+
+      // Renderiza blocos
+      renderBlocoPessoa("jaqueline", jaquelineRoutine, relAno, relMes);
+      renderBlocoPessoa("naomi",     naomiRoutine,     relAno, relMes);
+    }
+
+    // ── trocarAba — atualizar para incluir relatório ────────────────
+    // (sobrescreve a função definida acima)
+    trocarAba = function(aba) {
+      abaAtiva = aba;
+      document.getElementById("aba-rotina").style.display = aba === "rotina" ? "" : "none";
+      document.getElementById("aba-obs").style.display    = aba === "obs"    ? "flex" : "none";
+      document.getElementById("aba-rel").style.display    = aba === "rel"    ? "flex" : "none";
+      document.getElementById("btn-aba-rotina").classList.toggle("ativa", aba === "rotina");
+      document.getElementById("btn-aba-obs").classList.toggle("ativa",    aba === "obs");
+      document.getElementById("btn-aba-rel").classList.toggle("ativa",    aba === "rel");
+      if (aba === "obs") { carregarFormulario(); renderHistorico(); }
+      if (aba === "rel") {
+        relAno = new Date().getFullYear();
+        relMes = new Date().getMonth();
+        renderRelatorio();
+      }
+    };
+
+    // ── Modal de dia ────────────────────────────────────────────
+    var modalDiaKey  = ""; // YYYY-MM-DD
+    var editandoId   = null; // null = novo, string = editar
+
+    // ── Exclusão de tarefas builtin por data ──────────────────────
+    function chaveExcluidos(usuario, dataKey) {
+      return "ritmo_excluidos_" + usuario + "_" + dataKey;
+    }
+
+    function carregarExcluidos(usuario, dataKey) {
+      return JSON.parse(localStorage.getItem(chaveExcluidos(usuario, dataKey)) || "[]");
+    }
+
+    function taskId(t) { // identificador único por tarefa
+      return t.i + "|" + t.n;
+    }
+
+    function getTarefasHojeFiltradas(rotina, dataKey, usuario) {
+      var todas     = getTarefasHoje(rotina, dataKey);
+      var excluidos = carregarExcluidos(usuario, dataKey);
+      return todas.filter(function(t) {
+        return excluidos.indexOf(taskId(t)) === -1;
+      });
+    }
+
+    function excluirBuiltin(tid) {
+      var lista = carregarExcluidos(usuarioAtivo, modalDiaKey);
+      if (lista.indexOf(tid) === -1) lista.push(tid);
+      localStorage.setItem(chaveExcluidos(usuarioAtivo, modalDiaKey), JSON.stringify(lista));
+      renderModalLista();
+      atualizar(); // atualiza Agora/Próximo na tela principal
+    }
+
+    var DIAS_MOD  = ["domingo","segunda","terça","quarta","quinta","sexta","sábado"];
+    var MESES_MOD = ["janeiro","fevereiro","março","abril","maio","junho",
+                     "julho","agosto","setembro","outubro","novembro","dezembro"];
+
+    function chaveExtra(usuario, dataKey) {
+      return "ritmo_extra_" + usuario + "_" + dataKey;
+    }
+
+    function carregarExtras(usuario, dataKey) {
+      return JSON.parse(localStorage.getItem(chaveExtra(usuario, dataKey)) || "[]");
+    }
+
+    function salvarExtras(usuario, dataKey, lista) {
+      localStorage.setItem(chaveExtra(usuario, dataKey), JSON.stringify(lista));
+    }
+
+    function abrirModalDia(dia, ano, mes) {
+      var d   = String(dia).padStart(2, "0");
+      var m   = String(mes + 1).padStart(2, "0");
+      modalDiaKey = ano + "-" + m + "-" + d;
+      editandoId  = null;
+
+      var dObj    = new Date(ano, mes, dia);
+      var diaSem  = DIAS_MOD[dObj.getDay()];
+      var nomeMes = MESES_MOD[mes];
+      document.getElementById("modal-dia-titulo").textContent =
+        diaSem.charAt(0).toUpperCase() + diaSem.slice(1) + ", " + dia + " de " + nomeMes;
+      document.getElementById("modal-dia-sub").textContent =
+        (usuarioAtivo === "naomi" ? "Naomi" : "Jaqueline");
+
+      esconderFormAdd();
+      renderModalLista();
+      document.getElementById("modal-dia").style.display = "flex";
+      document.body.style.overflow = "hidden";
+    }
+
+    function fecharModalDia(ev) {
+      if (ev && ev.target !== document.getElementById("modal-dia")) return;
+      document.getElementById("modal-dia").style.display = "none";
+      document.body.style.overflow = "";
+    }
+
+    function renderModalLista() {
+      var rotina     = usuarioAtivo === "naomi" ? naomiRoutine : jaquelineRoutine;
+      var builtinAll = getTarefasHoje(rotina, modalDiaKey);
+      var excluidos  = carregarExcluidos(usuarioAtivo, modalDiaKey);
+      var builtin    = builtinAll.filter(function(t) {
+        return excluidos.indexOf(taskId(t)) === -1;
+      });
+      var extras  = carregarExtras(usuarioAtivo, modalDiaKey);
+
+      // Combinar e ordenar por hora de início
+      var todas = builtin.map(function(t) {
+        return { i: t.i, f: t.f, n: t.n, cat: "", tipo: "builtin", tid: taskId(t) };
+      }).concat(extras.map(function(t) {
+        return { i: t.i, f: t.f, n: t.n, cat: t.cat || "", tipo: "extra", id: t.id };
+      }));
+      todas.sort(function(a, b) { return toMin(a.i) - toMin(b.i); });
+
+      var lista = document.getElementById("modal-lista");
+      lista.innerHTML = "";
+
+      if (todas.length === 0) {
+        lista.innerHTML = '<p style="font-size:0.83rem;color:#cccccc;font-style:italic">Nenhuma tarefa neste dia.</p>';
+        return;
+      }
+
+      todas.forEach(function(t) {
+        var item = document.createElement("div");
+        item.className = "modal-tarefa";
+
+        var hora = '<span class="modal-tarefa-hora">' + fmt(t.i) + (t.f ? " — " + fmt(t.f) : "") + '</span>';
+        var cat  = t.cat ? '<p class="modal-tarefa-cat">' + t.cat + '</p>' : "";
+        var info = '<div class="modal-tarefa-info"><p class="modal-tarefa-nome">' +
+                   t.n.replace(/</g, "&lt;") + '</p>' + cat + '</div>';
+
+        var acoes = "";
+        if (t.tipo === "builtin") {
+          // Escapa o tid para uso em onclick
+          var tidEsc = t.tid.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+          acoes = '<div class="modal-tarefa-acoes">' +
+            '<button class="modal-btn-acao" title="Excluir" onclick="excluirBuiltin(\'" + tidEsc + "\')">×</button>' +
+            '</div>';
+        } else if (t.tipo === "extra") {
+          acoes = '<div class="modal-tarefa-acoes">' +
+            '<button class="modal-btn-acao" title="Editar" onclick="editarExtra(\'" + t.id + "\')">&#9998;</button>' +
+            '<button class="modal-btn-acao" title="Remover" onclick="removerExtra(\'" + t.id + "\')">&#10005;</button>' +
+            '</div>';
+        }
+
+        item.innerHTML = hora + info + acoes;
+        lista.appendChild(item);
+      });
+    }
+
+    function mostrarFormAdd() {
+      editandoId = null;
+      document.getElementById("form-titulo").value = "";
+      document.getElementById("form-ini").value    = "";
+      document.getElementById("form-fim").value    = "";
+      document.getElementById("form-cat").value    = "";
+      document.getElementById("modal-btn-salvar").textContent = "Salvar tarefa";
+      document.getElementById("modal-form").style.display = "";
+      document.getElementById("modal-btn-add").style.display = "none";
+    }
+
+    function esconderFormAdd() {
+      document.getElementById("modal-form").style.display = "none";
+      document.getElementById("modal-btn-add").style.display = "";
+      editandoId = null;
+    }
+
+    function salvarTarefaExtra() {
+      var titulo = document.getElementById("form-titulo").value.trim();
+      var ini    = document.getElementById("form-ini").value;
+      var fim    = document.getElementById("form-fim").value;
+      var cat    = document.getElementById("form-cat").value;
+      if (!titulo || !ini) { alert("Preencha ao menos o título e o horário inicial."); return; }
+
+      var lista = carregarExtras(usuarioAtivo, modalDiaKey);
+
+      if (editandoId !== null) {
+        // Editar existente
+        lista = lista.map(function(t) {
+          return t.id === editandoId ? { id: t.id, i: ini, f: fim, n: titulo, cat: cat } : t;
+        });
+      } else {
+        // Novo
+        var novoId = Date.now().toString();
+        lista.push({ id: novoId, i: ini, f: fim, n: titulo, cat: cat });
+      }
+
+      salvarExtras(usuarioAtivo, modalDiaKey, lista);
+      esconderFormAdd();
+      renderModalLista();
+    }
+
+    function removerExtra(id) {
+      var lista = carregarExtras(usuarioAtivo, modalDiaKey).filter(function(t) {
+        return t.id !== id;
+      });
+      salvarExtras(usuarioAtivo, modalDiaKey, lista);
+      renderModalLista();
+    }
+
+    function editarExtra(id) {
+      var extras = carregarExtras(usuarioAtivo, modalDiaKey);
+      var t = extras.find(function(x) { return x.id === id; });
+      if (!t) return;
+      editandoId = id;
+      document.getElementById("form-titulo").value = t.n;
+      document.getElementById("form-ini").value    = t.i;
+      document.getElementById("form-fim").value    = t.f || "";
+      document.getElementById("form-cat").value    = t.cat || "";
+      document.getElementById("modal-btn-salvar").textContent = "Atualizar tarefa";
+      document.getElementById("modal-form").style.display = "";
+      document.getElementById("modal-btn-add").style.display = "none";
+    }
+
+  </script>
+</body>
+</html>
