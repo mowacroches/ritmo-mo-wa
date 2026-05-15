@@ -410,6 +410,60 @@
       margin-top: 8px;
     }
 
+    /* ── Dashboard cards ──────────────────────────────────────── */
+    .dash-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+    .dash-card {
+      background: #f7f7f7;
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .dash-card-label {
+      font-size: 0.82rem;
+      color: #888888;
+      flex: 1;
+      line-height: 1.4;
+    }
+    .dash-card-val {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .dash-padroes-titulo {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #cccccc;
+      margin-bottom: 12px;
+      margin-top: 4px;
+    }
+    .dash-padrao-item {
+      font-size: 0.82rem;
+      color: #555555;
+      line-height: 1.6;
+      padding: 8px 0 8px 12px;
+      border-left: 2px solid #eeeeee;
+      margin-bottom: 8px;
+    }
+    .dash-vazio {
+      font-size: 0.83rem;
+      color: #cccccc;
+      font-style: italic;
+      text-align: center;
+      padding: 16px 0;
+    }
+
     /* ── Modal de dia (bottom sheet) ───────────────────────────── */
     .modal-overlay {
       position: fixed;
@@ -683,26 +737,15 @@
         <button class="rel-nav-btn" onclick="navMesRel(1)" aria-label="Próximo mês">›</button>
       </div>
 
-      <!-- Aviso de fechamento -->
-      <div class="rel-aviso-fechamento" id="rel-aviso-fechamento" style="display:none">
-        Fechamento do mês disponível.
-      </div>
+      <!-- Pessoa ativa -->
+      <p class="rel-pessoa-nome" id="rel-pessoa-nome"></p>
 
-      <!-- Stats Jaqueline -->
-      <div class="rel-pessoa" id="rel-bloco-jaqueline">
-        <p class="rel-pessoa-nome">JAQUELINE</p>
-        <div id="rel-stats-jaqueline"></div>
-        <p class="rel-resumo-titulo">Resumo das observações</p>
-        <div id="rel-resumo-jaqueline"></div>
-      </div>
+      <!-- Cards do dashboard -->
+      <div class="dash-cards" id="dash-cards"></div>
 
-      <!-- Stats Naomi -->
-      <div class="rel-pessoa" id="rel-bloco-naomi">
-        <p class="rel-pessoa-nome">NAOMI</p>
-        <div id="rel-stats-naomi"></div>
-        <p class="rel-resumo-titulo">Resumo das observações</p>
-        <div id="rel-resumo-naomi"></div>
-      </div>
+      <!-- Padrões percebidos -->
+      <p class="dash-padroes-titulo">Padrões percebidos</p>
+      <div id="dash-padroes"></div>
     </div>
   </div><!-- fim aba-rel -->
 
@@ -1161,6 +1204,7 @@
       document.getElementById("btn-naomi").classList.toggle("ativo", usuario === "naomi");
 
       atualizar();
+      if (abaAtiva === "rel") renderRelatorio();
     }
 
     // ── Relógio, data e calendário ─────────────────────────
@@ -1423,57 +1467,185 @@
       return lista;
     }
 
-    function renderBlocoPessoa(pessoa, rotina, ano, mes) {
-      var obs      = obsDoMes(pessoa, ano, mes);
-      var totalObs = obs.length;
-      var diasAlt  = obs.filter(function(e) { return e.alteracoes && e.alteracoes.trim(); }).length;
-      var tarefas  = contarTarefasMes(rotina, ano, mes);
-      var hoje     = new Date();
-      var ehMesAtual = (ano === hoje.getFullYear() && mes === hoje.getMonth());
-      var labelTarefas = ehMesAtual ? "Tarefas programadas (até hoje)" : "Tarefas programadas no mês";
+    function renderRelatorio() {
+      var hoje   = new Date();
+      var rotina = usuarioAtivo === "naomi" ? naomiRoutine : jaquelineRoutine;
+      var pessoa = usuarioAtivo;
 
-      // Stats
-      var statsEl = document.getElementById("rel-stats-" + pessoa);
-      statsEl.innerHTML = [
-        '<div class="rel-stat"><span class="rel-stat-label">' + labelTarefas + '</span><span class="rel-stat-val">' + tarefas + '</span></div>',
-        '<div class="rel-stat"><span class="rel-stat-label">Observações registradas</span><span class="rel-stat-val">' + totalObs + '</span></div>',
-        '<div class="rel-stat"><span class="rel-stat-label">Dias com alterações</span><span class="rel-stat-val">' + diasAlt + '</span></div>',
+      // Label do mês e pessoa
+      document.getElementById("rel-mes-label").textContent =
+        MESES_REL[relMes] + " " + relAno;
+      document.getElementById("rel-pessoa-nome").textContent =
+        pessoa === "naomi" ? "NAOMI" : "JAQUELINE";
+
+      var totalDias  = new Date(relAno, relMes + 1, 0).getDate();
+      var ehMesAtual = (relAno === hoje.getFullYear() && relMes === hoje.getMonth());
+      var limDia     = ehMesAtual ? hoje.getDate() : totalDias;
+
+      // Acumuladores
+      var tarefasConcluidas = 0;
+      var tarefasRemovidas  = 0;
+      var tarefasAdicionadas = 0;
+      var cargaPorDia  = {};
+      var tarefasPorHora = {};
+
+      for (var d = 1; d <= limDia; d++) {
+        var dk = relAno + "-" +
+          String(relMes + 1).padStart(2, "0") + "-" +
+          String(d).padStart(2, "0");
+        if (rotina.especiais[dk]) continue;
+
+        var todas     = getTarefasHoje(rotina, dk);
+        var excluidos = carregarExcluidos(pessoa, dk);
+        var extras    = carregarExtras(pessoa, dk);
+        var ativas    = todas.filter(function(t) {
+          return excluidos.indexOf(taskId(t)) === -1;
+        });
+
+        tarefasConcluidas  += ativas.length + extras.length;
+        tarefasRemovidas   += excluidos.length;
+        tarefasAdicionadas += extras.length;
+
+        var totalDoDia = ativas.length + extras.length;
+        if (totalDoDia > 0) cargaPorDia[d] = totalDoDia;
+
+        [].concat(ativas, extras).forEach(function(t) {
+          var h = parseInt(t.i.split(":")[0], 10);
+          tarefasPorHora[h] = (tarefasPorHora[h] || 0) + 1;
+        });
+      }
+
+      // Dias de descanso respeitados
+      var diasDescanso = 0;
+      for (var d2 = 1; d2 <= limDia; d2++) {
+        var dk2 = relAno + "-" +
+          String(relMes + 1).padStart(2, "0") + "-" +
+          String(d2).padStart(2, "0");
+        var esp = rotina.especiais[dk2];
+        if (esp && (esp.msg.toLowerCase().indexOf("descanso") !== -1 ||
+                    esp.msg.toLowerCase().indexOf("folga") !== -1)) {
+          diasDescanso++;
+        }
+      }
+
+      // Dia(s) com maior carga
+      var maxCarga = 0;
+      var diasMaxCarga = [];
+      Object.keys(cargaPorDia).forEach(function(d) {
+        var c = cargaPorDia[d];
+        if (c > maxCarga)      { maxCarga = c; diasMaxCarga = [d]; }
+        else if (c === maxCarga) { diasMaxCarga.push(d); }
+      });
+
+      // Horários mais intensos
+      var maxHora = 0;
+      var horasIntensas = [];
+      Object.keys(tarefasPorHora).forEach(function(h) {
+        var c = tarefasPorHora[h];
+        if (c > maxHora)      { maxHora = c; horasIntensas = [parseInt(h)]; }
+        else if (c === maxHora) { horasIntensas.push(parseInt(h)); }
+      });
+
+      // Observações
+      var obs     = obsDoMes(pessoa, relAno, relMes);
+      var totalObs = obs.length;
+      var diasAlt  = obs.filter(function(e) {
+        return e.alteracoes && e.alteracoes.trim();
+      }).length;
+
+      // Verifica dados suficientes
+      var semDados = (tarefasConcluidas === 0 && totalObs === 0 && diasDescanso === 0);
+
+      // Formata valores
+      function val(v) { return (v === 0 || v === "") ? "—" : String(v); }
+      var diasMaxTexto = diasMaxCarga.length
+        ? "Dia" + (diasMaxCarga.length > 1 ? "s " : " ") + diasMaxCarga.join(", ")
+        : "—";
+      var horasTexto = horasIntensas.length
+        ? horasIntensas.sort(function(a,b){return a-b;}).map(function(h){return h+"h";}).join(", ")
+        : "—";
+
+      // Render cards
+      var cards = document.getElementById("dash-cards");
+      var padrDiv = document.getElementById("dash-padroes");
+
+      if (semDados) {
+        cards.innerHTML   = '<p class="dash-vazio">Sem dados suficientes neste período.</p>';
+        padrDiv.innerHTML = '<p class="dash-vazio">Sem dados suficientes neste período.</p>';
+        return;
+      }
+
+      function card(label, v) {
+        return '<div class="dash-card">' +
+          '<span class="dash-card-label">' + label + '</span>' +
+          '<span class="dash-card-val">' + v + '</span>' +
+          '</div>';
+      }
+
+      cards.innerHTML = [
+        card("Tarefas concluídas",               val(tarefasConcluidas)),
+        card("Observações registradas",           val(totalObs)),
+        card("Dias com alterações na rotina",     val(diasAlt)),
+        card("Dias de descanso respeitados",       val(diasDescanso)),
+        card("Dias com maior carga de tarefas",    diasMaxTexto),
+        card("Horários mais intensos",             horasTexto),
+        card("Tarefas removidas",                  val(tarefasRemovidas)),
+        card("Tarefas adicionadas manualmente",    val(tarefasAdicionadas)),
       ].join("");
 
-      // Resumo: mostrar snippets de "geral" e "ajustes"
-      var resumoEl = document.getElementById("rel-resumo-" + pessoa);
-      var snippets = obs.filter(function(e) { return e.geral || e.ajustes; });
-      if (snippets.length === 0) {
-        resumoEl.innerHTML = '<p class="rel-vazio">Nenhuma observação registrada.</p>';
-      } else {
-        var html = "";
-        snippets.slice(-5).reverse().forEach(function(e) { // 5 mais recentes
-          var partes = e.data.split("-");
-          var diaNum = parseInt(partes[2], 10);
-          var texto  = (e.geral || e.ajustes || "").slice(0, 120);
-          if (texto.length === 120) texto += "…";
-          html += '<p class="rel-resumo-item"><strong>Dia ' + diaNum + ':</strong> ' +
-                  texto.replace(/</g, "&lt;") + '</p>';
-        });
-        resumoEl.innerHTML = html;
+      // Padrões percebidos
+      var padroes = [];
+
+      // Tarefas após 18h
+      var totalTarde = Object.keys(tarefasPorHora).filter(function(h) {
+        return parseInt(h) >= 18;
+      }).reduce(function(acc, h) { return acc + tarefasPorHora[h]; }, 0);
+      if (totalTarde > 0) {
+        padroes.push(totalTarde + " tarefa(s) programada(s) após 18h no período.");
       }
-    }
 
-    function renderRelatorio() {
-      // Label do mês
-      document.getElementById("rel-mes-label").textContent = MESES_REL[relMes] + " de " + relAno;
+      // Dias de descanso
+      if (diasDescanso > 0) {
+        padroes.push(diasDescanso + " dia(s) de descanso respeitado(s) no mês.");
+      }
 
-      // Aviso de fechamento (apenas último dia do mês atual)
-      var hoje        = new Date();
-      var ultimoDia   = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
-      var ehMesAtual  = (relAno === hoje.getFullYear() && relMes === hoje.getMonth());
-      var ehUltimoDia = (hoje.getDate() === ultimoDia);
-      document.getElementById("rel-aviso-fechamento").style.display =
-        (ehMesAtual && ehUltimoDia) ? "" : "none";
+      // Alterações registradas
+      if (diasAlt > 0) {
+        padroes.push(diasAlt + " dia(s) com alteração registrada na rotina.");
+      }
 
-      // Renderiza blocos
-      renderBlocoPessoa("jaqueline", jaquelineRoutine, relAno, relMes);
-      renderBlocoPessoa("naomi",     naomiRoutine,     relAno, relMes);
+      // Intensidade antes da feira (mai/2026)
+      if (relAno === 2026 && relMes === 4) {
+        var diasPre = [19, 20, 21].filter(function(d) { return d <= limDia; });
+        var cargaPre = diasPre.reduce(function(acc, d) {
+          return acc + (cargaPorDia[d] || 0);
+        }, 0);
+        if (cargaPre > 0) {
+          padroes.push("Maior intensidade nos dias anteriores à feira (" +
+            diasPre.join(", ") + "/mai).");
+        }
+      }
+
+      // Dificuldades registradas
+      var ndif = obs.filter(function(e) {
+        return e.dificuldades && e.dificuldades.trim();
+      }).length;
+      if (ndif > 0) {
+        padroes.push(ndif + " dia(s) com dificuldades registradas nas observações.");
+      }
+
+      // Tarefas removidas
+      if (tarefasRemovidas > 0) {
+        padroes.push(tarefasRemovidas + " tarefa(s) removida(s) da rotina no período.");
+      }
+
+      if (padroes.length === 0) {
+        padrDiv.innerHTML = '<p class="dash-vazio">Sem dados suficientes para identificar padrões.</p>';
+      } else {
+        padrDiv.innerHTML = padroes.map(function(p) {
+          return '<p class="dash-padrao-item">' + p + '</p>';
+        }).join("");
+      }
     }
 
     // ── trocarAba — atualizar para incluir relatório ────────────────
